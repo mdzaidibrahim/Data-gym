@@ -23,7 +23,7 @@ class DataCleaningEnv:
         view_df = self.current_df.copy()
         try:
             view_df = view_df.replace([np.inf, -np.inf], np.nan).infer_objects(copy=False)
-            view_df = view_df.where(pd.notnull(view_df), None)
+            view_df = view_df.replace({np.nan: None})
             df_dict = view_df.to_dict(orient="records")
         except:
             df_dict = []
