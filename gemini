@@ -1,0 +1,85 @@
+Here is your exact, step-by-step battle plan to build this, pass the strict automated checks, and submit it flawlessly through that dashboard.
+
+Phase 1: Project Architecture & OpenEnv Boilerplate
+The judges' automated system will instantly fail you if your structure isn't perfect. Start by setting up a clean directory.
+
+Initialize the Repo: Create a new folder for your project.
+
+Define openenv.yaml: This is the manifest the validator looks for first.
+
+Declare your environment name (e.g., data-cleaner-env).
+
+List your 3 tasks explicitly: clean_duplicates_nulls, standardize_formats, resolve_semantic_errors.
+
+Draft env.py (The Core Engine):
+
+Define your Pydantic models.
+
+Observation: Current state of the DataFrame (e.g., head(), info(), isnull().sum()).
+
+Action: Operations the LLM can apply (e.g., DropNulls(column: str), FillNA(column: str, value: Any), ChangeType(column: str, type: str), DropDuplicates()).
+
+Implement the required step(), reset(), and state() functions.
+
+Phase 2: Generating the Data & Graders (25% Weight)
+Since you are using Pandas, your grader is beautifully simple: compare the agent's current DataFrame against a hidden, perfectly clean "gold-standard" DataFrame.
+
+Create the Datasets (Synthetic CSVs):
+
+Write a quick script to generate a perfect dataset, then intentionally corrupt it to create the starting states for your 3 tasks.
+
+Task 1 (Easy): Introduce exact duplicate rows and random NaN values. The agent just needs to drop/fill them.
+
+Task 2 (Medium): Introduce mismatched types (e.g., "1,000" as a string instead of 1000 int) and chaotic date formats (MM-DD-YYYY mixed with DD/MM/YY).
+
+Task 3 (Hard): Inject logic errors. For example, a salary column with -50000, or a status column that conflicts with an end_date.
+
+The Grader Logic: In your environment, calculate the score by checking column by column. Score = (Correctly formatted columns) / (Total columns). This perfectly scales from 0.0 to 1.0.
+
+Phase 3: Implement Dense Reward Shaping (20% Weight)
+The judges explicitly warned against sparse rewards (just giving a 1.0 at the end).
+
+Reward Signal: In your step() function, if an action moves the DataFrame closer to the gold standard (e.g., successfully drops a duplicate), give a +0.1 reward.
+
+Penalties: If the agent hallucinates a column name or drops valid data (reducing the row count below the target), give a -0.1 penalty.
+
+Phase 4: The Baseline Inference Script (Crucial)
+Look closely at the dashboard images you provided. You must strictly follow their stdout logging format. If you miss a single space, the automated phase will fail you.
+
+Create inference.py: Place it in the root directory.
+
+Environment Variables: Ensure it reads API_BASE_URL, MODEL_NAME, and HF_TOKEN.
+
+Strict Logging: You must emit the exact strings:
+
+[START] task=<task_name> env=data-cleaner model=<model_name>
+
+[STEP] step=1 action=DropDuplicates() reward=0.10 done=false error=null
+
+[END] success=true steps=5 score=1.00 rewards=0.10,0.10,0.20...
+
+Phase 5: Containerization & Pre-Submission Validation
+Do not skip this before pushing to GitHub.
+
+Write the Dockerfile: It should be extremely lightweight. Use a slim Python image, pip install pandas openenv-core openai, and expose whatever port your space needs.
+
+Run Local Validation: Execute the openenv validate command locally. Fix any Pydantic or YAML errors it catches.
+
+Run the Bash Script: Use the provided validate-submission.sh script to ensure your Docker build succeeds within the 10-minute timeout.
+
+Phase 6: Deployment & Dashboard Submission
+Push to GitHub: Make your repository public.
+
+Deploy to Hugging Face Spaces: Create a new Docker space. Push your code. Make sure to add the openenv tag to the space.
+
+Submit: Go back to the dashboard you screenshotted.
+
+Paste your GitHub Repo URL.
+
+Paste your HF Space URL.
+
+Check all 5 boxes in the Pre-Submission Checklist (confirming your inference.py uses the OpenAI client and strict logging).
+
+Hit Submit.
+
+This is a highly winnable concept because it executes perfectly within the technical constraints of the hackathon.

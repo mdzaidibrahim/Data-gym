@@ -1,0 +1,12 @@
+name: data_cleaning_gym
+version: "1.0.0"
+description: RL environment for data cleaning tasks
+type: http
+endpoints:
+  reset: /reset
+  step: /step
+  state: /state
+tasks:
+  - easy_cleaning
+  - medium_cleaning
+  - hard_cleaning

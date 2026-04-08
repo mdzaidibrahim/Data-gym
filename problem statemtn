@@ -1,0 +1,306 @@
+# 🧠 Problem Statement: Data Cleaning Gym (OpenEnv)
+
+## 🚨 Problem Context
+
+Data scientists spend nearly **80% of their time cleaning and preparing data**, while only 20% is spent on actual modeling and insights.
+
+This process is:
+
+* Repetitive
+* Time-consuming
+* Error-prone
+* Largely manual
+
+Despite being critical, there is **no standardized environment** where AI agents can learn and be evaluated on real-world data cleaning tasks.
+
+---
+
+## 🎯 Objective
+
+Build a **real-world OpenEnv reinforcement learning environment** where an AI agent learns to clean messy datasets step-by-step.
+
+The environment must:
+
+* Simulate realistic data cleaning workflows
+* Provide structured actions
+* Offer deterministic evaluation
+* Support progressive task difficulty
+
+---
+
+## 🧩 Environment Overview
+
+The agent is given a **messy dataset (pandas DataFrame)** and must transform it into a **clean, correct dataset** using a sequence of actions.
+
+Each episode represents a **data cleaning session**.
+
+---
+
+# ⚙️ Solution Design
+
+## 📊 Observation Space
+
+Define a Pydantic model:
+
+```python
+class Observation(BaseModel):
+    dataframe: List[Dict[str, Any]]   # serialized DataFrame
+    task_description: str
+    remaining_steps: int
+```
+
+---
+
+## 🎮 Action Space
+
+```python
+class Action(BaseModel):
+    action_type: Literal[
+        "drop_nulls",
+        "fill_nulls",
+        "convert_type",
+        "remove_duplicates",
+        "fix_value"
+    ]
+    column: Optional[str]
+    value: Optional[str]
+```
+
+---
+
+## 🏁 Episode Goal
+
+Transform the given dataset into the **gold-standard clean dataset**.
+
+---
+
+# 🧪 TASK DESIGN (MANDATORY 3 TASKS)
+
+## 🟢 Task 1 — Easy (Basic Cleaning)
+
+### Input Issues:
+
+* Null values
+* Duplicate rows
+
+### Expected Actions:
+
+* drop_nulls
+* remove_duplicates
+
+### Goal:
+
+Clean dataset with no nulls or duplicates
+
+---
+
+## 🟡 Task 2 — Medium (Data Standardization)
+
+### Input Issues:
+
+* Incorrect data types (e.g., "25" instead of 25)
+* Inconsistent date formats ("01-02-2023", "2023/02/01")
+
+### Expected Actions:
+
+* convert_type
+* fix_value
+
+### Goal:
+
+Standardized schema and formats
+
+---
+
+## 🔴 Task 3 — Hard (Semantic Cleaning)
+
+### Input Issues:
+
+* Invalid values (e.g., salary = -50000)
+* Conflicting duplicate records
+* Multi-source dataset inconsistencies
+
+### Expected Actions:
+
+* fix_value
+* remove_duplicates
+* logical corrections
+
+### Goal:
+
+Semantically correct dataset
+
+---
+
+# 📊 GRADING SYSTEM (DETERMINISTIC)
+
+Define a grading function:
+
+```python
+def grade(output_df, expected_df):
+    column_score = compare_columns(output_df, expected_df)
+    value_score = compare_values(output_df, expected_df)
+    type_score = compare_types(output_df, expected_df)
+
+    total_score = (
+        0.3 * column_score +
+        0.5 * value_score +
+        0.2 * type_score
+    )
+
+    return min(max(total_score, 0.0), 1.0)
+```
+
+### Requirements:
+
+* Score must be in [0.0, 1.0]
+* Fully deterministic
+* No randomness
+
+---
+
+# 🎯 REWARD FUNCTION (DENSE SIGNAL)
+
+Reward must reflect **incremental progress**.
+
+Example:
+
+```python
+reward = current_score - previous_score
+```
+
+Additional rules:
+
+* * reward for correct cleaning steps
+* * penalty for incorrect or destructive actions
+* final reward aligns with grader score
+
+---
+
+# 🔁 ENVIRONMENT API (OpenEnv)
+
+Implement:
+
+```python
+class DataCleaningEnv:
+
+    def reset(self):
+        return Observation
+
+    def step(self, action):
+        return observation, reward, done, info
+
+    def state(self):
+        return current_state
+```
+
+---
+
+# 📁 PROJECT STRUCTURE
+
+```
+project/
+│
+├── env/
+│   ├── environment.py
+│   ├── tasks.py
+│   ├── grader.py
+│   ├── models.py
+│
+├── openenv.yaml
+├── inference.py
+├── app.py
+├── Dockerfile
+├── requirements.txt
+└── README.md
+```
+
+---
+
+# 🤖 BASELINE INFERENCE SCRIPT
+
+Must:
+
+* Use OpenAI client
+* Read environment variables:
+
+  * API_BASE_URL
+  * MODEL_NAME
+  * HF_TOKEN
+
+### Output Format (STRICT):
+
+```
+[START] task=<task_name> env=data_cleaning model=<model_name>
+[STEP] step=1 action=<action> reward=0.10 done=false error=null
+[END] success=true steps=5 score=0.85 rewards=0.10,0.20,...
+```
+
+---
+
+# 🐳 DOCKER REQUIREMENTS
+
+* Must build successfully
+* Must run environment server
+* Compatible with Hugging Face Spaces
+
+---
+
+# 🌐 DEPLOYMENT
+
+Deploy as a **Hugging Face Space**:
+
+* Containerized
+* Responds to `/reset`
+* Publicly accessible
+
+---
+
+# 📘 README REQUIREMENTS
+
+Include:
+
+* Problem motivation (data cleaning pain)
+* Environment design
+* Action space
+* Observation space
+* Task descriptions
+* Setup instructions
+* Baseline results
+
+---
+
+# ⚠️ CONSTRAINTS
+
+* Must run on:
+
+  * 2 vCPU
+  * 8GB RAM
+* Runtime < 20 minutes
+* No external APIs
+* Deterministic outputs
+
+---
+
+# 🏆 WHY THIS SOLUTION WINS
+
+* Real-world relevance (high impact)
+* Deterministic grading (perfect for automation)
+* Dense reward signal (ideal for RL)
+* Clear difficulty progression
+* Lightweight and scalable
+
+---
+
+# 🎯 FINAL OUTPUT REQUIREMENT
+
+Produce a **fully working OpenEnv environment** that:
+
+* Passes `openenv validate`
+* Runs via Docker
+* Deploys to Hugging Face
+* Includes inference script with reproducible scores
+
+No placeholders.
+No pseudocode.
+Everything must run end-to-end.
